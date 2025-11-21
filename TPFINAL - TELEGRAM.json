@@ -1,0 +1,435 @@
+{
+  "name": "TPFINAL - TELEGRAM",
+  "nodes": [
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.texto }}",
+        "options": {
+          "systemMessage": "=Eres un consejero de Nutricion para gente que desea adelgazar en 10 dias.\n\nDebes usar Supabase vector Store para dar respuesta y si la pregunta no está relacionada con la temática, que directamente no consulte los archivos, que responda que no tiene esa información o que no se dedica al tema en cuestión.  Brinda respuesta concisa.\n\nSi ya tenes todos los parametros enviaras la información por Telegram de modo conciso."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        -320,
+        -48
+      ],
+      "id": "e390104c-0311-4417-ba85-4a8b3ea243c5",
+      "name": "Agendador de Eventos"
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $('Enviar Mensaje (Persona)').item.json.message.from.id }}",
+        "contextWindowLength": 7
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        -224,
+        160
+      ],
+      "id": "8065431e-2bdc-4fe4-be4f-a18efb11b70d",
+      "name": "Memoria Simple"
+    },
+    {
+      "parameters": {
+        "model": "openai/gpt-3.5-turbo",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+      "typeVersion": 1,
+      "position": [
+        -432,
+        160
+      ],
+      "id": "f4a53d31-89c2-4284-9233-a6f87f923ee3",
+      "name": "Modelo de Open Router",
+      "credentials": {
+        "openRouterApi": {
+          "id": "dJircr25BU1QxhXU",
+          "name": "OpenRouter account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "updates": [
+          "message"
+        ],
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -1600,
+        144
+      ],
+      "id": "1b7421fd-bcec-4b6f-b018-be4887bff36a",
+      "name": "Enviar Mensaje (Persona)",
+      "webhookId": "3d09e9b4-8dcf-4584-ab89-73627adef105",
+      "credentials": {
+        "telegramApi": {
+          "id": "Ogu1zzyEhfA4rZsw",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Enviar Mensaje (Persona)').item.json.message.from.id }}",
+        "text": "={{ $json.output }}",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        16,
+        -48
+      ],
+      "id": "6ec9b7d7-40b9-45fa-8eed-8903d75fe331",
+      "name": "Mandar mensaje (Bot)",
+      "webhookId": "25993ae7-c3aa-4fa3-b49c-08c225def00f",
+      "credentials": {
+        "telegramApi": {
+          "id": "Ogu1zzyEhfA4rZsw",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "ef1db93c-b69a-4dd3-851e-5630bceb0112",
+              "leftValue": "={{ $json.message.voice }}",
+              "rightValue": "",
+              "operator": {
+                "type": "object",
+                "operation": "exists",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "55079a2c-c861-4422-9e60-0a8fb18ac6a9",
+              "leftValue": "={{ $json.message.text }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notExists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -1392,
+        144
+      ],
+      "id": "e5d01c09-4066-4532-b511-a9884c8ad2d7",
+      "name": "If",
+      "alwaysOutputData": false
+    },
+    {
+      "parameters": {
+        "resource": "audio",
+        "operation": "analyze",
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-2.0-flash-lite",
+          "mode": "list",
+          "cachedResultName": "models/gemini-2.0-flash-lite"
+        },
+        "text": "Transcribir textual lo que hay en el audio",
+        "inputType": "binary",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1,
+      "position": [
+        -976,
+        -48
+      ],
+      "id": "7825b6d2-a1df-4dfe-a7ad-3c171529d98b",
+      "name": "Transcribir audio",
+      "alwaysOutputData": false,
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "resource": "file",
+        "fileId": "={{ $json.message.voice.file_id }}",
+        "additionalFields": {
+          "mimeType": ""
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        -1184,
+        -48
+      ],
+      "id": "b36f272e-7534-4a15-b533-98a8bb58182f",
+      "name": "Obtener audios",
+      "webhookId": "df75df02-6c56-4e7f-b6d5-0a506f25f2e3",
+      "alwaysOutputData": true,
+      "credentials": {
+        "telegramApi": {
+          "id": "Ogu1zzyEhfA4rZsw",
+          "name": "Telegram account"
+        }
+      },
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "62ca28d2-ffeb-43cd-b2f6-0ca178b33e86",
+              "name": "texto",
+              "value": "={{ $json.message.text }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -752,
+        160
+      ],
+      "id": "d0ede6d8-c352-4ca0-9ef4-e227774fc310",
+      "name": "Cambiar campo de chat a \"texto\""
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "62ca28d2-ffeb-43cd-b2f6-0ca178b33e86",
+              "name": "texto",
+              "value": "={{ $json.content.parts[0].text.concat() }} ",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -752,
+        -48
+      ],
+      "id": "4e239a4d-0024-4e03-9296-3b700dc7029c",
+      "name": "Cambiar campo de Content Text a \"Texto\"",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "modelName": "embed-multilingual-v2.0"
+      },
+      "type": "@n8n/n8n-nodes-langchain.embeddingsCohere",
+      "typeVersion": 1,
+      "position": [
+        -80,
+        368
+      ],
+      "id": "cd223568-9217-4c9d-b107-3b8a1be531b2",
+      "name": "Embeddings Cohere",
+      "credentials": {
+        "cohereApi": {
+          "id": "JeLhQIj53HAGE7x5",
+          "name": "CohereApi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "retrieve-as-tool",
+        "toolDescription": "Recuperar info de los files",
+        "tableName": {
+          "__rl": true,
+          "value": "tab_vector",
+          "mode": "list",
+          "cachedResultName": "tab_vector"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreSupabase",
+      "typeVersion": 1.3,
+      "position": [
+        -48,
+        192
+      ],
+      "id": "04a2fcf6-340a-4c59-bf95-162d65078d9c",
+      "name": "Supabase Vector Store",
+      "credentials": {
+        "supabaseApi": {
+          "id": "0mbjOh5YsLJtazQ1",
+          "name": "Supabase account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Agendador de Eventos": {
+      "main": [
+        [
+          {
+            "node": "Mandar mensaje (Bot)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Memoria Simple": {
+      "ai_memory": [
+        [
+          {
+            "node": "Agendador de Eventos",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Modelo de Open Router": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Agendador de Eventos",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Enviar Mensaje (Persona)": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Obtener audios",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Cambiar campo de chat a \"texto\"",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Transcribir audio": {
+      "main": [
+        [
+          {
+            "node": "Cambiar campo de Content Text a \"Texto\"",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Obtener audios": {
+      "main": [
+        [
+          {
+            "node": "Transcribir audio",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Cambiar campo de chat a \"texto\"": {
+      "main": [
+        [
+          {
+            "node": "Agendador de Eventos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Cambiar campo de Content Text a \"Texto\"": {
+      "main": [
+        [
+          {
+            "node": "Agendador de Eventos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings Cohere": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Supabase Vector Store",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Supabase Vector Store": {
+      "ai_tool": [
+        [
+          {
+            "node": "Agendador de Eventos",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "c07d86c4-9d57-424d-8ed3-fbb5e4780632",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "252a4ccbb57f5c7b1acc8eae39d316a895777991bc2ead1066c1fb7722a53666"
+  },
+  "id": "qX1ZUC2aMpQmtdR3",
+  "tags": []
+}

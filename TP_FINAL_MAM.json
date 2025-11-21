@@ -1,0 +1,859 @@
+{
+  "name": "TP_FINAL_MAM",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -4624,
+        -1568
+      ],
+      "id": "0d1a5dce-ebd0-4a32-8139-4c04bc0cf42b",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "jsCode": "const archivosActuales = $(\"archivos_actuales\").all().map((item) => item.json).filter(a => a.name !== '.emptyFolderPlaceholder');\nconst archivosAnteriores = $(\"archivos_anteriores\").all().map((item) => item.json);\nlet archivos_a_agregar = [];\nlet archivos_a_modificar = [];\nlet archivos_a_eliminar = [];\narchivosActuales.forEach((archivoActual) => {\nconst archivoAnterior = archivosAnteriores.find(\n(archivoAnterior) => archivoAnterior.nombre_archi === archivoActual.name,\n);\nif (!archivoAnterior) {\narchivos_a_agregar.push(archivoActual);\n} else if (new Date(archivoAnterior.ultima_modificacion).getTime() !== new\nDate(archivoActual.updated_at).getTime()\n) {\narchivos_a_modificar.push(archivoActual);\n}\n});\narchivosAnteriores.forEach((archivoAnterior) => {\nconst archivoPosterior = archivosActuales.find(\n(archivoPosterior) => archivoAnterior.nombre_archi === archivoPosterior.name,\n);\nif (!archivoPosterior) {\narchivos_a_eliminar.push(archivoAnterior);\n}\n});\n\n\nreturn { archivos_a_agregar, archivos_a_modificar, archivos_a_eliminar };"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -4032,
+        -1568
+      ],
+      "id": "bb84cb77-2f7a-46ef-af44-bb0b0ca17ade",
+      "name": "code",
+      "alwaysOutputData": false
+    },
+    {
+      "parameters": {
+        "operation": "delete",
+        "tableId": "data_archivos",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "id",
+              "condition": "gt",
+              "keyValue": "0"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        -3568,
+        -1584
+      ],
+      "id": "074ad970-735a-4a68-9ac0-254ec1a56275",
+      "name": "DELETE",
+      "alwaysOutputData": true,
+      "executeOnce": false,
+      "credentials": {
+        "supabaseApi": {
+          "id": "0mbjOh5YsLJtazQ1",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "c4882ec5-fd53-40e0-a636-10616c1ca0a0",
+              "leftValue": "={{ $json.archivos_a_agregar }}",
+              "rightValue": "",
+              "operator": {
+                "type": "array",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "14b522f5-0750-4b5b-a95e-9b7be8c07cf4",
+              "leftValue": "={{ $json.archivos_a_modificar }}",
+              "rightValue": "",
+              "operator": {
+                "type": "array",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "97d809ad-501f-4191-8735-5db5b260b1dd",
+              "leftValue": "={{ $json.archivos_a_eliminar }}",
+              "rightValue": "",
+              "operator": {
+                "type": "array",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "or"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -3824,
+        -1568
+      ],
+      "id": "4954edcb-2430-475c-9f6c-e9edcdd58ceb",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "data_archivos"
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        -4208,
+        -1568
+      ],
+      "id": "e3a750a4-f299-4343-925f-0f1fcfa7688f",
+      "name": "archivos_anteriores",
+      "alwaysOutputData": true,
+      "executeOnce": true,
+      "credentials": {
+        "supabaseApi": {
+          "id": "0mbjOh5YsLJtazQ1",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://zgjsfrlxhpqxsgwawnew.supabase.co/storage/v1/object/list/archivos_n8n",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpnanNmcmx4aHBxeHNnd2F3bmV3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMzNDI3MzcsImV4cCI6MjA3ODkxODczN30.FzNdb8TCoN6Izmo-6FvASdAYMsAKsLn3vU1vUjxybI8"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpnanNmcmx4aHBxeHNnd2F3bmV3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMzNDI3MzcsImV4cCI6MjA3ODkxODczN30.FzNdb8TCoN6Izmo-6FvASdAYMsAKsLn3vU1vUjxybI8"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\n  \"prefix\": \"\",\n  \"limit\": 1000\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -4416,
+        -1568
+      ],
+      "id": "ee05c57c-6aa6-4c1a-9c85-1fe1b27d3c4e",
+      "name": "archivos_actuales",
+      "alwaysOutputData": false
+    },
+    {
+      "parameters": {
+        "batchSize": 100,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        -2736,
+        -1584
+      ],
+      "id": "473d97cd-bdc9-44f1-a8b3-983d07ac2e36",
+      "name": "Loop Over Items",
+      "alwaysOutputData": false
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.nombre_archi }}",
+                    "rightValue": "=text",
+                    "operator": {
+                      "type": "string",
+                      "operation": "contains"
+                    },
+                    "id": "0b61af1c-da9c-4ecc-96b2-6b264de63a71"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "TXT"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "ca49ce72-913b-4b7b-96b5-206c6d793423",
+                    "leftValue": "={{ $json.nombre_archi }}",
+                    "rightValue": "xlsx",
+                    "operator": {
+                      "type": "string",
+                      "operation": "contains"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "XLSX"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "52f14a31-f312-49ff-af32-45d50987617d",
+                    "leftValue": "={{ $json.nombre_archi }}",
+                    "rightValue": "pdf",
+                    "operator": {
+                      "type": "string",
+                      "operation": "contains"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": "={{ true }}",
+              "outputKey": "PDF"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "a24bd49c-caf6-4952-93d3-fc1fb30bbf07",
+                    "leftValue": "={{ $json.nombre_archi }}",
+                    "rightValue": "csv",
+                    "operator": {
+                      "type": "string",
+                      "operation": "contains"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "CSV"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.3,
+      "position": [
+        -2288,
+        -1600
+      ],
+      "id": "5bdf20ec-9f13-474c-a4dc-46670c9d1dc8",
+      "name": "Switch1",
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1,
+      "position": [
+        -1872,
+        -1808
+      ],
+      "id": "b2ad45ee-c52d-42cf-b557-206ab9862df5",
+      "name": "Extract from File CSV"
+    },
+    {
+      "parameters": {
+        "operation": "pdf",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1,
+      "position": [
+        -1888,
+        -1584
+      ],
+      "id": "e9cef951-76db-4305-81d6-47f95485d724",
+      "name": "Extract from File PDF"
+    },
+    {
+      "parameters": {
+        "operation": "xlsx",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1,
+      "position": [
+        -1888,
+        -1392
+      ],
+      "id": "a8e5e66b-5c57-41e5-8e49-99993c5ed001",
+      "name": "Extract from File XLSX"
+    },
+    {
+      "parameters": {
+        "url": "=https://zgjsfrlxhpqxsgwawnew.supabase.co/storage/v1/object/public/archivos_n8n/{{ $json.nombre_archi }}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -2512,
+        -1568
+      ],
+      "id": "ddfd98ce-666a-48fa-a6ab-661b527a2fc4",
+      "name": "HTTP Request",
+      "executeOnce": false
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.documentDefaultDataLoader",
+      "typeVersion": 1.1,
+      "position": [
+        -1088,
+        -1152
+      ],
+      "id": "8280be22-2992-4164-a339-62c3ddc9d28a",
+      "name": "Default Data Loader"
+    },
+    {
+      "parameters": {
+        "numberInputs": 4
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        -1408,
+        -1536
+      ],
+      "id": "958ec664-d0e1-4df3-83c0-accc5d7b3a5a",
+      "name": "Merge1"
+    },
+    {
+      "parameters": {
+        "mode": "insert",
+        "tableName": {
+          "__rl": true,
+          "value": "tab_vector",
+          "mode": "list",
+          "cachedResultName": "tab_vector"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreSupabase",
+      "typeVersion": 1.3,
+      "position": [
+        -1184,
+        -1408
+      ],
+      "id": "36717863-83b0-4627-be1b-5341930a1d49",
+      "name": "Supabase Vector Store1",
+      "credentials": {
+        "supabaseApi": {
+          "id": "0mbjOh5YsLJtazQ1",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "0d0c6f3b-9ad9-48ae-afde-e54c001e999f",
+              "name": "=archivos_a_agregar",
+              "value": "={{ $('code').item.json.archivos_a_agregar }}",
+              "type": "array"
+            },
+            {
+              "id": "8116ea96-2c47-4abb-9ca7-bb8f440210e7",
+              "name": "archivos_a_modificar",
+              "value": "={{ $('code').item.json.archivos_a_modificar }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -3376,
+        -1584
+      ],
+      "id": "60a360ac-067f-4be2-af2f-6ebda6c8baab",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "archivos_a_agregar",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        -3168,
+        -1584
+      ],
+      "id": "35d04af5-1a91-4d62-ae17-ff0959cb3531",
+      "name": "Split Out",
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "tableId": "data_archivos",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "nombre_archi",
+              "fieldValue": "={{ $json.name }}"
+            },
+            {
+              "fieldId": "fecha_creacion",
+              "fieldValue": "={{ $json.created_at }}"
+            },
+            {
+              "fieldId": "ultima_modificacion",
+              "fieldValue": "={{ $json.updated_at }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        -2976,
+        -1584
+      ],
+      "id": "efba56fd-7351-4b54-8588-9f5c5fa1e15c",
+      "name": "CREA registros en tabla control",
+      "alwaysOutputData": true,
+      "executeOnce": false,
+      "credentials": {
+        "supabaseApi": {
+          "id": "0mbjOh5YsLJtazQ1",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "text",
+        "destinationKey": "jsonData",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1,
+      "position": [
+        -1888,
+        -2016
+      ],
+      "id": "d69aa3a0-4519-40da-9649-d4a868807ffb",
+      "name": "Extract from File txt",
+      "alwaysOutputData": false
+    },
+    {
+      "parameters": {
+        "modelName": "embed-multilingual-v2.0"
+      },
+      "type": "@n8n/n8n-nodes-langchain.embeddingsCohere",
+      "typeVersion": 1,
+      "position": [
+        -1296,
+        -1136
+      ],
+      "id": "3236521a-7812-4a37-92d9-6cea7326d6e0",
+      "name": "Embeddings Cohere",
+      "credentials": {
+        "cohereApi": {
+          "id": "JeLhQIj53HAGE7x5",
+          "name": "CohereApi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "SE TOMAN LOS FILES QUE SE CARGARON EN STORAGE DE SUPABASE, CON LA INFO SOBRE LA CUAL EL USUARIO QUIERE CONSULTAR.",
+        "height": 208,
+        "width": 304
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -4608,
+        -1856
+      ],
+      "id": "00223633-659d-42f6-b2b5-80e65f56e0de",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "El nodo CODE devuelve la lista de los files nuevos, modificados y borrados- El flujo sigue si detecta que en los files hubo cambios sigue, si no corta la ejecucion (IF)",
+        "height": 208,
+        "width": 304
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -3744,
+        -1824
+      ],
+      "id": "e1dbff49-8d3f-4294-a7ee-388df515cbaa",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "content": "SE OBTIENE CONSULTANDO LA  TABLA DE CONTROL 'data_archivos', los files ya cargados y se compara en el nodo 'CODE' con los files de STORAGE sobre los cuales se basara nuestro flujo .\nEl nodo CODE tiene una rutina que detecta de lo que estamos cargando que es nuevo, que se modifico y que se borro.\nSe parte del supuesto que si la info de los files cargados en storage sufre cambios, se cargan no solo los files que cambiaron sino el resto (por cuestion de practicidad)",
+        "height": 208,
+        "width": 304
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -4240,
+        -1840
+      ],
+      "id": "f60381a9-a816-4686-9a8e-da92ab996da5",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "content": "En lineas generales se recorre cada FILE en el storage de SUPABASE, se transforman a Json segun el formato de los files originales y la info se sube a nuestro RAG.",
+        "height": 208,
+        "width": 752
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -3056,
+        -1840
+      ],
+      "id": "391ef2ce-237c-4476-b41b-ca33acdd39e9",
+      "name": "Sticky Note3"
+    },
+    {
+      "parameters": {
+        "content": "Schedule Trigger , seria el trigger definitivo (ejecutando cada XX tiempo), pero para probar de evento manual"
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -4656,
+        -1408
+      ],
+      "id": "20614272-a983-4392-ba64-41605c98112f",
+      "name": "Sticky Note4"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "archivos_actuales",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "code": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "DELETE",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "DELETE": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "archivos_anteriores": {
+      "main": [
+        [
+          {
+            "node": "code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "archivos_actuales": {
+      "main": [
+        [
+          {
+            "node": "archivos_anteriores",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items": {
+      "main": [
+        [],
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch1": {
+      "main": [
+        [
+          {
+            "node": "Extract from File txt",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Extract from File CSV",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Extract from File PDF",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Extract from File XLSX",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Switch1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract from File CSV": {
+      "main": [
+        [
+          {
+            "node": "Merge1",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Extract from File PDF": {
+      "main": [
+        [
+          {
+            "node": "Merge1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract from File XLSX": {
+      "main": [
+        [
+          {
+            "node": "Merge1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Default Data Loader": {
+      "ai_document": [
+        [
+          {
+            "node": "Supabase Vector Store1",
+            "type": "ai_document",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge1": {
+      "main": [
+        [
+          {
+            "node": "Supabase Vector Store1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Supabase Vector Store1": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Split Out",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out": {
+      "main": [
+        [
+          {
+            "node": "CREA registros en tabla control",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "CREA registros en tabla control": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract from File txt": {
+      "main": [
+        [
+          {
+            "node": "Merge1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings Cohere": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Supabase Vector Store1",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "b0adf72a-23c7-44e0-920e-450fef413820",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "ad6f869012c0940b2ac84571a06e06211b5f80ac7339b9c977a85b1192bca012"
+  },
+  "id": "tSXNuxMDAhoZLHPT",
+  "tags": []
+}
